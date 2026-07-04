@@ -1,8 +1,7 @@
 import os
 import csv
 import io
-import psycopg2
-import psycopg2.extras
+import sqlite3
 import logging
 from logging.handlers import RotatingFileHandler
 from datetime import date, timedelta
@@ -41,7 +40,11 @@ else:
     app.config.from_object('config.DevelopmentConfig')
 
 # Configure SQLAlchemy Parameters
-app.config['SQLALCHEMY_DATABASE_URI'] = app.config.get('DATABASE_URL')
+db_path = app.config.get('DATABASE_URL', 'stock_manager.db')
+if db_path.startswith('/'):
+    app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite://{db_path}"
+else:
+    app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{db_path}"
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Initialize SQLAlchemy ORM engine
@@ -67,58 +70,15 @@ def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-class PostgresCursorWrapper:
-    def __init__(self, cursor):
-        self.cursor = cursor
-
-    def execute(self, sql, params=None):
-        # Translate ? to %s for PostgreSQL compatibility
-        sql = sql.replace('?', '%s')
-        return self.cursor.execute(sql, params)
-
-    def fetchone(self):
-        return self.cursor.fetchone()
-
-    def fetchall(self):
-        return self.cursor.fetchall()
-
-    def __iter__(self):
-        return iter(self.cursor)
-
-    @property
-    def rowcount(self):
-        return self.cursor.rowcount
-
-    def __getattr__(self, name):
-        return getattr(self.cursor, name)
-
-class PostgresConnectionWrapper:
-    def __init__(self, conn):
-        self.conn = conn
-
-    def cursor(self, *args, **kwargs):
-        cursor = self.conn.cursor(*args, **kwargs)
-        return PostgresCursorWrapper(cursor)
-
-    def commit(self):
-        return self.conn.commit()
-
-    def rollback(self):
-        return self.conn.rollback()
-
-    def close(self):
-        return self.conn.close()
-
-    def execute(self, sql, params=None):
-        cursor = self.cursor()
-        cursor.execute(sql, params)
-        return cursor
-
 def get_db():
     db = getattr(g, '_database', None)
     if db is None:
-        conn = psycopg2.connect(app.config['DATABASE_URL'], cursor_factory=psycopg2.extras.DictCursor)
-        db = g._database = PostgresConnectionWrapper(conn)
+        db_path = app.config['DATABASE_URL']
+        db_dir = os.path.dirname(db_path)
+        if db_dir:
+            os.makedirs(db_dir, exist_ok=True)
+        db = g._database = sqlite3.connect(db_path)
+        db.row_factory = sqlite3.Row
     return db
 
 @app.teardown_appcontext
@@ -133,7 +93,7 @@ def init_db():
         # Create users table
         db.execute('''
             CREATE TABLE IF NOT EXISTS users (
-                id SERIAL PRIMARY KEY,
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
                 username VARCHAR(255) UNIQUE NOT NULL,
                 password VARCHAR(255) NOT NULL,
                 role VARCHAR(50) NOT NULL CHECK(role IN ('admin', 'staff'))
@@ -143,7 +103,7 @@ def init_db():
         # Create warehouses table
         db.execute('''
             CREATE TABLE IF NOT EXISTS warehouses (
-                id SERIAL PRIMARY KEY,
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name VARCHAR(255) NOT NULL,
                 location VARCHAR(255) NOT NULL,
                 manager_name VARCHAR(255) NOT NULL
@@ -163,7 +123,7 @@ def init_db():
         # Create products table
         db.execute('''
             CREATE TABLE IF NOT EXISTS products (
-                id SERIAL PRIMARY KEY,
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name VARCHAR(255) NOT NULL,
                 category VARCHAR(255) NOT NULL,
                 quantity INTEGER NOT NULL DEFAULT 0,
@@ -179,7 +139,7 @@ def init_db():
         # Create stock_movements table
         db.execute('''
             CREATE TABLE IF NOT EXISTS stock_movements (
-                id SERIAL PRIMARY KEY,
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
                 product_id INTEGER NOT NULL,
                 movement_type VARCHAR(10) NOT NULL CHECK(movement_type IN ('in', 'out')),
                 quantity INTEGER NOT NULL,
@@ -195,7 +155,7 @@ def init_db():
         # Create suppliers table
         db.execute('''
             CREATE TABLE IF NOT EXISTS suppliers (
-                id SERIAL PRIMARY KEY,
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name VARCHAR(255) NOT NULL,
                 contact_number VARCHAR(100),
                 email VARCHAR(255),
@@ -206,7 +166,7 @@ def init_db():
         # Create purchase_orders table
         db.execute('''
             CREATE TABLE IF NOT EXISTS purchase_orders (
-                id SERIAL PRIMARY KEY,
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
                 supplier_id INTEGER NOT NULL,
                 product_id INTEGER NOT NULL,
                 quantity INTEGER NOT NULL,
@@ -223,7 +183,7 @@ def init_db():
         # Create invoices table
         db.execute('''
             CREATE TABLE IF NOT EXISTS invoices (
-                id SERIAL PRIMARY KEY,
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
                 product_id INTEGER NOT NULL,
                 quantity INTEGER NOT NULL,
                 unit_price DOUBLE PRECISION NOT NULL,
