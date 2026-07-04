@@ -39,6 +39,9 @@ if env == 'production':
 else:
     app.config.from_object('config.DevelopmentConfig')
 
+# Ensure SECRET_KEY has a default value in code itself
+app.config['SECRET_KEY'] = app.config.get('SECRET_KEY', 'stock-manager-secret-key-12345')
+
 # Configure SQLAlchemy Parameters
 db_path = app.config.get('DATABASE_URL', 'stock_manager.db')
 if db_path.startswith('/'):
@@ -417,14 +420,14 @@ def dashboard():
     # 3. Stock In Today (sum of all 'in' movements today)
     cursor.execute("""
         SELECT COALESCE(SUM(quantity), 0) FROM stock_movements
-        WHERE movement_type = 'in' AND created_at::date = CURRENT_DATE
+        WHERE movement_type = 'in' AND date(created_at) = date('now')
     """)
     stock_in_today = cursor.fetchone()[0]
 
     # 4. Stock Out Today (sum of all 'out' movements today)
     cursor.execute("""
         SELECT COALESCE(SUM(quantity), 0) FROM stock_movements
-        WHERE movement_type = 'out' AND created_at::date = CURRENT_DATE
+        WHERE movement_type = 'out' AND date(created_at) = date('now')
     """)
     stock_out_today = cursor.fetchone()[0]
 
@@ -444,7 +447,7 @@ def dashboard():
         SELECT id, name, category, quantity, expiry_date
         FROM products
         WHERE expiry_date IS NOT NULL
-          AND expiry_date < CURRENT_DATE
+          AND expiry_date < date('now')
         ORDER BY expiry_date ASC
     """)
     expired_products = cursor.fetchall()
@@ -452,11 +455,11 @@ def dashboard():
     # 7. Expiring soon — expires within 30 days (but not yet expired)
     cursor.execute("""
         SELECT id, name, category, quantity, expiry_date,
-               (expiry_date - CURRENT_DATE) AS days_left
+               CAST(julianday(expiry_date) - julianday(date('now')) AS INTEGER) AS days_left
         FROM products
         WHERE expiry_date IS NOT NULL
-          AND expiry_date >= CURRENT_DATE
-          AND expiry_date <= CURRENT_DATE + INTERVAL '30 days'
+          AND expiry_date >= date('now')
+          AND expiry_date <= date('now', '+30 days')
         ORDER BY expiry_date ASC
     """)
     expiring_soon = cursor.fetchall()
@@ -549,11 +552,11 @@ def products():
         query += " AND p.quantity < p.min_stock_threshold"
     elif status_filter == 'expiring_soon':
         query += " AND p.expiry_date IS NOT NULL"\
-                 " AND p.expiry_date >= CURRENT_DATE"\
-                 " AND p.expiry_date <= CURRENT_DATE + INTERVAL '30 days'"
+                 " AND p.expiry_date >= date('now')"\
+                 " AND p.expiry_date <= date('now', '+30 days')"
     elif status_filter == 'expired':
         query += " AND p.expiry_date IS NOT NULL"\
-                 " AND p.expiry_date < CURRENT_DATE"
+                 " AND p.expiry_date < date('now')"
 
     if warehouse_filter:
         query += " AND p.warehouse_id = ?"
@@ -841,10 +844,10 @@ def stock_out():
         cursor.execute("""
             INSERT INTO invoices (product_id, quantity, unit_price, total_amount,
                                   customer_name, date, created_by)
-            VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING id
+            VALUES (?, ?, ?, ?, ?, ?, ?)
         """, (product_id, qty, unit_price, total_amount,
                customer_name, today_str, session['user_id']))
-        invoice_id = cursor.fetchone()[0]
+        invoice_id = cursor.lastrowid
         db.commit()
 
         # Check stock alert levels for notifications
@@ -1078,10 +1081,10 @@ def reports():
     movements_cond = "1=1"
     params = []
     if start_date:
-        movements_cond += " AND sm.created_at::date >= ?"
+        movements_cond += " AND date(sm.created_at) >= ?"
         params.append(start_date)
     if end_date:
-        movements_cond += " AND sm.created_at::date <= ?"
+        movements_cond += " AND date(sm.created_at) <= ?"
         params.append(end_date)
 
     # 1. Bar chart: top 5 best-selling products (based on Stock Out transactions)
@@ -1101,13 +1104,13 @@ def reports():
 
     # 2. Line chart: monthly stock movement (total stock in vs stock out per month)
     monthly_query = f"""
-        SELECT to_char(sm.created_at, 'YYYY-MM') as month,
+        SELECT strftime('%Y-%m', sm.created_at) as month,
                SUM(CASE WHEN sm.movement_type='in'  THEN sm.quantity ELSE 0 END) as total_in,
                SUM(CASE WHEN sm.movement_type='out' THEN sm.quantity ELSE 0 END) as total_out
         FROM stock_movements sm
         WHERE {movements_cond}
-        GROUP BY to_char(sm.created_at, 'YYYY-MM')
-        ORDER BY to_char(sm.created_at, 'YYYY-MM')
+        GROUP BY month
+        ORDER BY month
     """
     cursor.execute(monthly_query, params)
     monthly_rows = cursor.fetchall()
@@ -1422,10 +1425,10 @@ def export_reports_pdf():
     movements_cond = "1=1"
     params = []
     if start_date:
-        movements_cond += " AND sm.created_at::date >= ?"
+        movements_cond += " AND date(sm.created_at) >= ?"
         params.append(start_date)
     if end_date:
-        movements_cond += " AND sm.created_at::date <= ?"
+        movements_cond += " AND date(sm.created_at) <= ?"
         params.append(end_date)
 
     # 1. Top 5 best-selling products
@@ -1443,13 +1446,13 @@ def export_reports_pdf():
 
     # 2. Monthly stock movements
     monthly_query = f"""
-        SELECT to_char(sm.created_at, 'YYYY-MM') as month,
+        SELECT strftime('%Y-%m', sm.created_at) as month,
                SUM(CASE WHEN sm.movement_type='in'  THEN sm.quantity ELSE 0 END) as total_in,
                SUM(CASE WHEN sm.movement_type='out' THEN sm.quantity ELSE 0 END) as total_out
         FROM stock_movements sm
         WHERE {movements_cond}
-        GROUP BY to_char(sm.created_at, 'YYYY-MM')
-        ORDER BY to_char(sm.created_at, 'YYYY-MM')
+        GROUP BY month
+        ORDER BY month
     """
     cursor.execute(monthly_query, params)
     monthly_rows = cursor.fetchall()

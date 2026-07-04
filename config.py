@@ -6,7 +6,7 @@ load_dotenv()
 
 class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY', 'stock-manager-secret-key-12345')
-    DATABASE_URL = os.environ.get('DATABASE_URL', 'stock_manager.db')
+    DATABASE_URL = os.environ.get('DATABASE_URL', '/tmp/stock_manager.db')
     
     # Flask-Mail configuration
     MAIL_SERVER = 'smtp.gmail.com'
