@@ -1,0 +1,236 @@
+{% extends "base.html" %}
+
+{% block title %}AI Demand Forecasting - Stock Manager{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-2">
+    
+    <!-- Header -->
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <div>
+            <h1 class="fw-bold h2 mb-1 text-dark">AI Demand Forecasting</h1>
+            <p class="text-muted small mb-0">Machine learning-based demand projection and replenishment suggestions for the next 30 days</p>
+        </div>
+        
+        <!-- Product Selector Form -->
+        <div class="col-md-4 col-lg-3">
+            <form method="GET" action="{{ url_for('forecasting') }}" id="forecastSelectorForm">
+                <label for="product_id" class="form-label text-muted small fw-semibold mb-1">Select Product to Analyze</label>
+                <select class="form-select" id="product_id" name="product_id" onchange="document.getElementById('forecastSelectorForm').submit()">
+                    {% for p in products %}
+                        <option value="{{ p.id }}" {% if selected_product and selected_product.id == p.id %}selected{% endif %}>
+                            {{ p.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </form>
+        </div>
+    </div>
+
+    {% if selected_product %}
+    <!-- Summary Metrics Grid -->
+    <div class="row g-4 mb-4">
+        
+        <!-- Metric 1: Current Stock -->
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 h-100 rounded-3">
+                <div class="card-body d-flex align-items-center justify-content-between p-4">
+                    <div>
+                        <span class="text-muted small fw-semibold d-block mb-1">Current Stock Level</span>
+                        <h3 class="fw-extrabold mb-0">{{ selected_product.quantity }} <span class="text-muted fs-6 fw-normal">units</span></h3>
+                        <span class="badge bg-light text-dark border mt-2">Threshold: {{ selected_product.min_stock_threshold }} units</span>
+                    </div>
+                    <div class="bg-primary bg-opacity-10 text-primary p-3 rounded-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="currentColor" class="bi bi-box-seam-fill" viewBox="0 0 16 16">
+                            <path fill-rule="evenodd" d="M15.528 2.973a.75.75 0 0 1 .472.696v8.662a.75.75 0 0 1-.472.696l-7.25 2.9a.75.75 0 0 1-.557 0l-7.25-2.9A.75.75 0 0 1 0 12.331V3.669a.75.75 0 0 1 .471-.696L7.443.184a.75.75 0 0 1 .557 0l7.528 2.789Z M8.5 1.566L14.28 3.7 8.5 5.84V1.566Zm-1 0V5.84L1.72 3.7 7.5 1.566Zm1 5.24l5.62-2.08v6.208L8.5 13.014V6.806Zm-1 0v6.208L2.38 10.934V4.726l5.12 2.08Z"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Metric 2: Predicted 30-Day Demand -->
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 h-100 rounded-3">
+                <div class="card-body d-flex align-items-center justify-content-between p-4">
+                    <div>
+                        <span class="text-muted small fw-semibold d-block mb-1">Predicted 30-Day Demand</span>
+                        <h3 class="fw-extrabold mb-0 text-primary">{{ predicted_demand }} <span class="text-muted fs-6 fw-normal">units</span></h3>
+                        <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-10 mt-2">ML Trend Projection</span>
+                    </div>
+                    <div class="bg-primary bg-opacity-10 text-primary p-3 rounded-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="currentColor" class="bi bi-graph-up-arrow" viewBox="0 0 16 16">
+                            <path fill-rule="evenodd" d="M0 0h1v15h15v1H0V0Zm10 3.5a.5.5 0 0 1 .5-.5h4a.5.5 0 0 1 .5.5v4a.5.5 0 0 1-1 0V4.707L10.146 8.5a.5.5 0 0 1-.708 0L7 6.207 1.354 11.854a.5.5 0 1 1-.708-.708l6-6a.5.5 0 0 1 .708 0L9 7.793 13.793 3H10.5a.5.5 0 0 1-.5-.5Z"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Metric 3: Reorder Suggestion -->
+        <div class="col-md-4">
+            {% if reorder_needed %}
+            <div class="card border-0 h-100 rounded-3 text-white" style="background: linear-gradient(135deg, #ef4444, #dc2626);">
+                <div class="card-body d-flex align-items-center justify-content-between p-4">
+                    <div>
+                        <span class="text-white text-opacity-75 small fw-semibold d-block mb-1">Reorder Suggestion</span>
+                        <h3 class="fw-extrabold mb-0">+{{ suggested_reorder }} <span class="text-white text-opacity-75 fs-6 fw-normal">units</span></h3>
+                        <span class="badge bg-white text-danger border mt-2">Low Stock Alert</span>
+                    </div>
+                    <div class="bg-white bg-opacity-20 text-white p-3 rounded-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="currentColor" class="bi bi-exclamation-triangle-fill" viewBox="0 0 16 16">
+                            <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="card border-0 h-100 rounded-3 text-white" style="background: linear-gradient(135deg, #10b981, #059669);">
+                <div class="card-body d-flex align-items-center justify-content-between p-4">
+                    <div>
+                        <span class="text-white text-opacity-75 small fw-semibold d-block mb-1">Reorder Suggestion</span>
+                        <h4 class="fw-bold mb-0">Sufficient Stock</h4>
+                        <span class="badge bg-white text-success border mt-2">No action needed</span>
+                    </div>
+                    <div class="bg-white bg-opacity-20 text-white p-3 rounded-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="currentColor" class="bi bi-check-circle-fill" viewBox="0 0 16 16">
+                            <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+    </div>
+
+    <!-- Forecasting Chart -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm border-0 rounded-3">
+                <div class="card-header bg-white py-3 border-bottom-0">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <h5 class="fw-bold mb-0 text-dark">Demand Projection (Next 30 Days)</h5>
+                        <div class="d-flex gap-3 small">
+                            <span class="d-flex align-items-center gap-1"><span class="badge p-1 bg-primary rounded-circle"></span> Past Sales</span>
+                            <span class="d-flex align-items-center gap-1"><span class="badge p-1 bg-danger rounded-circle"></span> Linear Trend Forecast</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div style="position: relative; height: 350px;">
+                        <canvas id="forecastChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    {% else %}
+    <div class="text-center py-5">
+        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" class="bi bi-bar-chart-line text-muted mb-3" viewBox="0 0 16 16">
+            <path d="M11 2a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v12h.5a.5.5 0 0 1 0 1H.5a.5.5 0 0 1 0-1H1v-3a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v3h1V7a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v7h1V2zm1 12h2V2h-2v12zm-3 0V7H7v7h2zm-5 0v-3H2v3h2z"/>
+        </svg>
+        <h5 class="text-muted">No products registered yet.</h5>
+    </div>
+    {% endif %}
+
+</div>
+
+{% if selected_product %}
+<!-- Load Chart.js from CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const ctx = document.getElementById('forecastChart').getContext('2d');
+    
+    const labels = {{ labels | tojson }};
+    const actualData = {{ actual_sales | tojson }};
+    const forecastData = {{ forecast_sales | tojson }};
+    
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: 'Actual Daily Sales',
+                    data: actualData,
+                    borderColor: '#4f46e5',
+                    backgroundColor: 'rgba(79, 70, 229, 0.05)',
+                    borderWidth: 3,
+                    pointRadius: 4,
+                    pointHoverRadius: 6,
+                    pointBackgroundColor: '#4f46e5',
+                    pointBorderColor: '#fff',
+                    spanGaps: false,
+                    tension: 0.2
+                },
+                {
+                    label: 'Trend Forecast Projection',
+                    data: forecastData,
+                    borderColor: '#ef4444',
+                    backgroundColor: 'transparent',
+                    borderWidth: 2.5,
+                    borderDash: [6, 4],
+                    pointRadius: 0,
+                    pointHoverRadius: 4,
+                    spanGaps: true,
+                    tension: 0.1
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    mode: 'index',
+                    intersect: false,
+                    padding: 12,
+                    backgroundColor: '#1e293b',
+                    titleColor: '#fff',
+                    bodyColor: '#fff',
+                    bodySpacing: 6,
+                    cornerRadius: 8,
+                    borderColor: 'rgba(255, 255, 255, 0.1)',
+                    borderWidth: 1
+                }
+            },
+            scales: {
+                x: {
+                    grid: {
+                        display: false
+                    },
+                    ticks: {
+                        font: {
+                            family: 'Inter, system-ui, sans-serif',
+                            size: 11
+                        },
+                        color: '#64748b'
+                    }
+                },
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: '#f1f5f9'
+                    },
+                    ticks: {
+                        font: {
+                            family: 'Inter, system-ui, sans-serif',
+                            size: 11
+                        },
+                        color: '#64748b',
+                        precision: 0
+                    }
+                }
+            }
+        }
+    });
+});
+</script>
+{% endif %}
+{% endblock %}

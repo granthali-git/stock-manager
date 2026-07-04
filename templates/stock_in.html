@@ -1,0 +1,207 @@
+{% extends "base.html" %}
+
+{% block title %}Record Stock In - Stock Manager{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-7">
+        <!-- Back link -->
+        <div class="mb-3">
+            <a href="{{ url_for('stock_movements') }}" class="text-decoration-none d-inline-flex align-items-center text-muted small">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-left me-1" viewBox="0 0 16 16">
+                    <path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z"/>
+                </svg>
+                Back to Stock Movements
+            </a>
+        </div>
+
+        <div class="card shadow-sm p-4">
+            <div class="card-body">
+                <!-- Header -->
+                <div class="d-flex align-items-center mb-4">
+                    <div class="bg-success bg-opacity-10 text-success p-3 rounded-3 me-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="currentColor" class="bi bi-arrow-down-circle-fill" viewBox="0 0 16 16">
+                            <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM8.5 4.5a.5.5 0 0 0-1 0v5.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V4.5z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h2 class="fw-bold mb-0">Record Stock In</h2>
+                        <p class="text-muted mb-0 small">Add incoming stock to a product</p>
+                    </div>
+                </div>
+
+                <form method="POST" action="{{ url_for('stock_in') }}" class="needs-validation" novalidate>
+                    <div class="row g-3">
+                        <!-- Product -->
+                        <div class="col-12">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="fw-semibold text-muted small">Select Product *</span>
+                                <button type="button" class="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1" id="btnScanBarcode">
+                                    <i class="bi bi-camera-fill"></i> Scan Barcode
+                                </button>
+                            </div>
+                            <div class="form-floating">
+                                <select class="form-select" id="product_id" name="product_id" required>
+                                    <option value="">-- Select a product --</option>
+                                    {% for p in product_list %}
+                                        <option value="{{ p.id }}" data-barcode="{{ p.barcode or '' }}">{{ p.name }} (Current Stock: {{ p.quantity }})</option>
+                                    {% endfor %}
+                                </select>
+                                <label for="product_id">Product</label>
+                                <div class="invalid-feedback">Please select a product.</div>
+                            </div>
+                        </div>
+
+                        <!-- Quantity -->
+                        <div class="col-md-6">
+                            <div class="form-floating">
+                                <input type="number" min="1" class="form-control" id="quantity" name="quantity" placeholder="Quantity" required>
+                                <label for="quantity">Quantity to Add *</label>
+                                <div class="invalid-feedback">Please enter a quantity of 1 or more.</div>
+                            </div>
+                        </div>
+
+                        <!-- Note -->
+                        <div class="col-md-6">
+                            <div class="form-floating">
+                                <input type="text" class="form-control" id="note" name="note" placeholder="Note">
+                                <label for="note">Note (Optional)</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 pt-3 border-top d-flex justify-content-end gap-2">
+                        <a href="{{ url_for('stock_movements') }}" class="btn btn-outline-secondary px-4">Cancel</a>
+                        <button type="submit" class="btn btn-success px-4 d-flex align-items-center justify-content-center">
+                            Confirm Stock In
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# ── Scanner Modal ── #}
+<div class="modal fade" id="scannerModal" tabindex="-1" aria-labelledby="scannerModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold" id="scannerModalLabel">Scan Barcode</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center position-relative p-0" style="background:#000; min-height:350px;">
+                <div id="interactive" class="viewport w-100" style="height:350px; overflow:hidden;"></div>
+                <div class="position-absolute top-50 start-50 translate-middle pointer-events-none" style="border:2px dashed #0d6efd; width:80%; height:50%; box-sizing:border-box; z-index:10;"></div>
+                <div class="position-absolute bottom-0 start-50 translate-middle-x bg-dark bg-opacity-75 text-white w-100 py-2 small" style="z-index:11;">
+                    Align barcode inside the bounding box
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">Cancel Scan</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+#interactive.viewport {
+    position: relative;
+    width: 100%;
+    height: 350px;
+}
+#interactive.viewport > video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+#interactive.viewport > canvas {
+    display: none;
+}
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/@ericblade/quagga2/dist/quagga.min.js"></script>
+<script>
+let scanning = false;
+
+document.getElementById('btnScanBarcode').addEventListener('click', function() {
+    const modal = new bootstrap.Modal(document.getElementById('scannerModal'));
+    modal.show();
+});
+
+document.getElementById('scannerModal').addEventListener('shown.bs.modal', function () {
+    startScanner();
+});
+
+document.getElementById('scannerModal').addEventListener('hidden.bs.modal', function () {
+    stopScanner();
+});
+
+function startScanner() {
+    Quagga.init({
+        inputStream : {
+            name : "Live",
+            type : "LiveStream",
+            target: document.querySelector('#interactive'),
+            constraints: {
+                facingMode: "environment"
+            }
+        },
+        decoder : {
+            readers : ["code_128_reader", "ean_reader", "ean_8_reader", "code_39_reader", "upc_reader"]
+        }
+    }, function(err) {
+        if (err) {
+            console.error(err);
+            alert("Failed to start camera scanner: " + err);
+            bootstrap.Modal.getInstance(document.getElementById('scannerModal')).hide();
+            return;
+        }
+        Quagga.start();
+        scanning = true;
+    });
+
+    Quagga.onDetected(onBarcodeDetected);
+}
+
+function stopScanner() {
+    if (scanning) {
+        Quagga.stop();
+        scanning = false;
+    }
+}
+
+function onBarcodeDetected(result) {
+    const code = result.codeResult.code;
+    if (code) {
+        try {
+            const context = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = context.createOscillator();
+            osc.frequency.value = 800;
+            osc.connect(context.destination);
+            osc.start();
+            setTimeout(() => osc.stop(), 100);
+        } catch(e) {}
+
+        stopScanner();
+        bootstrap.Modal.getInstance(document.getElementById('scannerModal')).hide();
+
+        const productSelect = document.getElementById('product_id');
+        let found = false;
+        for (let i = 0; i < productSelect.options.length; i++) {
+            const opt = productSelect.options[i];
+            if (opt.dataset.barcode && opt.dataset.barcode === code) {
+                productSelect.selectedIndex = i;
+                productSelect.dispatchEvent(new Event('change'));
+                found = true;
+                break;
+            }
+        }
+
+        if (!found) {
+            alert("Scanned barcode: " + code + "\nNo matching product registered with this barcode.");
+        }
+    }
+}
+</script>
+{% endblock %}

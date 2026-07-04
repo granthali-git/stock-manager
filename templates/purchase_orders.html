@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+{% block title %}Purchase Orders - Stock Manager{% endblock %}
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center flex-wrap mb-4">
+    <div>
+        <h1 class="h2 fw-bold mb-0">Purchase Orders</h1>
+        <p class="text-muted mb-0">Track orders from suppliers</p>
+    </div>
+    <a href="{{ url_for('add_purchase_order') }}" class="btn btn-primary d-flex align-items-center gap-2 mt-3 mt-sm-0 px-4">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-plus-circle" viewBox="0 0 16 16">
+            <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+            <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
+        </svg>
+        New Order
+    </a>
+</div>
+
+<!-- Filters -->
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+        <form method="GET" action="{{ url_for('purchase_orders') }}" class="row g-3 align-items-end">
+            <div class="col-md-4">
+                <label class="form-label small fw-semibold">Payment Status</label>
+                <select class="form-select" name="payment_status">
+                    <option value="">All</option>
+                    <option value="pending"  {% if pay_filter   == 'pending'  %}selected{% endif %}>Pending</option>
+                    <option value="paid"     {% if pay_filter   == 'paid'     %}selected{% endif %}>Paid</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label small fw-semibold">Order Status</label>
+                <select class="form-select" name="order_status">
+                    <option value="">All</option>
+                    <option value="pending"  {% if order_filter == 'pending'  %}selected{% endif %}>Pending</option>
+                    <option value="received" {% if order_filter == 'received' %}selected{% endif %}>Received</option>
+                </select>
+            </div>
+            <div class="col-md-2 d-grid">
+                <button type="submit" class="btn btn-dark">Filter</button>
+            </div>
+            {% if pay_filter or order_filter %}
+            <div class="col-md-2 d-grid">
+                <a href="{{ url_for('purchase_orders') }}" class="btn btn-outline-secondary">Clear</a>
+            </div>
+            {% endif %}
+        </form>
+    </div>
+</div>
+
+<!-- Orders Table -->
+<div class="card shadow-sm">
+    <div class="card-body p-0">
+        {% if orders %}
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-4">#</th>
+                        <th>Supplier</th>
+                        <th>Product</th>
+                        <th>Qty</th>
+                        <th>Order Date</th>
+                        <th>Payment</th>
+                        <th>Status</th>
+                        <th class="pe-4 text-end">Update / Delete</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for o in orders %}
+                    <tr>
+                        <td class="ps-4 text-muted small">PO-{{ '%04d' % o.id }}</td>
+                        <td class="fw-semibold">{{ o.supplier_name }}</td>
+                        <td>{{ o.product_name }}</td>
+                        <td><span class="badge bg-light text-dark border">{{ o.quantity }}</span></td>
+                        <td class="text-muted small">{{ o.order_date }}</td>
+                        <td>
+                            {% if o.payment_status == 'paid' %}
+                                <span class="badge bg-success">Paid</span>
+                            {% else %}
+                                <span class="badge bg-warning text-dark">Pending</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if o.order_status == 'received' %}
+                                <span class="badge bg-success">Received</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Pending</span>
+                            {% endif %}
+                        </td>
+                        <td class="pe-4 text-end">
+                            <div class="d-inline-flex gap-2 align-items-center">
+                                <!-- Inline status update form -->
+                                <form method="POST" action="{{ url_for('update_purchase_order', order_id=o.id) }}" class="d-flex gap-1 align-items-center">
+                                    <select name="payment_status" class="form-select form-select-sm" style="width:auto;font-size:.78rem;">
+                                        <option value="pending"  {% if o.payment_status == 'pending'  %}selected{% endif %}>Unpaid</option>
+                                        <option value="paid"     {% if o.payment_status == 'paid'     %}selected{% endif %}>Paid</option>
+                                    </select>
+                                    <select name="order_status" class="form-select form-select-sm" style="width:auto;font-size:.78rem;">
+                                        <option value="pending"  {% if o.order_status == 'pending'  %}selected{% endif %}>Pending</option>
+                                        <option value="received" {% if o.order_status == 'received' %}selected{% endif %}>Received</option>
+                                    </select>
+                                    <button type="submit" class="btn btn-outline-primary btn-sm" title="Save status">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="currentColor" class="bi bi-check-lg" viewBox="0 0 16 16">
+                                            <path d="M12.736 3.97a.733.733 0 0 1 1.047 0c.286.289.29.756.01 1.05L7.88 12.01a.733.733 0 0 1-1.065.02L3.217 8.384a.757.757 0 0 1 0-1.06.733.733 0 0 1 1.047 0l3.052 3.093 5.4-6.425a.247.247 0 0 1 .02-.022z"/>
+                                        </svg>
+                                    </button>
+                                </form>
+                                <!-- Delete -->
+                                <form method="POST" action="{{ url_for('delete_purchase_order', order_id=o.id) }}"
+                                      onsubmit="return confirm('Delete order PO-{{ '%04d' % o.id }}?');">
+                                    <button type="submit" class="btn btn-outline-danger btn-sm" title="Delete">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="currentColor" class="bi bi-trash-fill" viewBox="0 0 16 16">
+                                            <path d="M2.5 1a1 1 0 0 0-1 1v1a1 1 0 0 0 1 1H3v9a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V4h.5a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H10a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1H2.5zm3 4a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 .5-.5zM8 5a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7A.5.5 0 0 1 8 5zm3 .5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 1 0z"/>
+                                        </svg>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" class="bi bi-clipboard2-check text-muted mb-3" viewBox="0 0 16 16">
+                <path d="M9.5 0a.5.5 0 0 1 .5.5.5.5 0 0 0 .5.5.5.5 0 0 1 .5.5V2a.5.5 0 0 1-.5.5h-5A.5.5 0 0 1 5 2v-.5a.5.5 0 0 1 .5-.5.5.5 0 0 0 .5-.5.5.5 0 0 1 .5-.5h3z"/>
+                <path d="M3 2.5a.5.5 0 0 1 .5-.5H4a.5.5 0 0 0 0-1h-.5A1.5 1.5 0 0 0 2 2.5v12A1.5 1.5 0 0 0 3.5 16h9a1.5 1.5 0 0 0 1.5-1.5v-12A1.5 1.5 0 0 0 12.5 1H12a.5.5 0 0 0 0 1h.5a.5.5 0 0 1 .5.5v12a.5.5 0 0 1-.5.5h-9a.5.5 0 0 1-.5-.5v-12z"/>
+                <path d="M10.854 7.854a.5.5 0 0 0-.708-.708L7.5 9.793 6.354 8.646a.5.5 0 1 0-.708.708l1.5 1.5a.5.5 0 0 0 .708 0l3-3z"/>
+            </svg>
+            <h5 class="text-muted">No purchase orders yet</h5>
+            <p class="text-muted small mb-3">Create your first purchase order to start tracking supplier deliveries.</p>
+            <a href="{{ url_for('add_purchase_order') }}" class="btn btn-primary">Create Order</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% if orders %}
+<p class="text-muted small mt-2 ms-1">
+    <strong>Tip:</strong> Changing Order Status to <em>Received</em> automatically adds the quantity to product stock.
+</p>
+{% endif %}
+
+{% endblock %}

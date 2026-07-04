@@ -1,0 +1,364 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Stock Manager{% endblock %}
+{% block title_header %}Dashboard{% endblock %}
+
+{% block content %}
+<style>
+/* Smooth Card Load Animations */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+.animate-card {
+    animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.delay-1 { animation-delay: 0.05s; }
+.delay-2 { animation-delay: 0.1s; }
+.delay-3 { animation-delay: 0.15s; }
+.delay-4 { animation-delay: 0.2s; }
+
+/* Dashboard Gradients */
+.bg-gradient-blue {
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+}
+.bg-gradient-red {
+    background: linear-gradient(135deg, #f87171, #dc2626);
+}
+.bg-gradient-green {
+    background: linear-gradient(135deg, #34d399, #059669);
+}
+.bg-gradient-orange {
+    background: linear-gradient(135deg, #fb923c, #ea580c);
+}
+
+.dashboard-card {
+    border-radius: 12px;
+    border: none;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.dashboard-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.1) !important;
+}
+</style>
+
+<!-- Low Stock Banner Alert -->
+{% if low_stock_items > 0 %}
+<div class="alert alert-danger border-0 shadow-sm d-flex align-items-center justify-content-between p-3 mb-4 rounded-3 animate-card" role="alert">
+    <div class="d-flex align-items-center gap-2">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-exclamation-triangle-fill flex-shrink-0" viewBox="0 0 16 16">
+            <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
+        </svg>
+        <span class="fw-semibold">Critical Stock Warning:</span>
+        <span>{{ low_stock_items }} product{{ 's' if low_stock_items != 1 }} {{ 'is' if low_stock_items == 1 else 'are' }} running below {{ 'its' if low_stock_items == 1 else 'their' }} minimum stock threshold!</span>
+    </div>
+    <a href="{{ url_for('products', status='low_stock') }}" class="btn btn-sm btn-light text-danger fw-bold text-decoration-none">Review Items</a>
+</div>
+{% endif %}
+
+<!-- 4 Summary Cards Grid -->
+<div class="row g-4 mb-4">
+    <!-- Card 1: Total Products -->
+    <div class="col-md-3">
+        <a href="{{ url_for('products') }}" class="text-decoration-none text-white d-block">
+            <div class="card dashboard-card bg-gradient-blue text-white shadow-sm p-3 h-100 animate-card delay-1">
+                <div class="card-body d-flex align-items-center justify-content-between">
+                    <div>
+                        <h6 class="text-white text-opacity-75 small fw-semibold mb-1">Total Products</h6>
+                        <h2 class="fw-extrabold mb-0">{{ total_products }}</h2>
+                    </div>
+                    <div class="text-white text-opacity-25 fs-1">
+                        <i class="bi bi-box-seam"></i>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+    <!-- Card 2: Low Stock -->
+    <div class="col-md-3">
+        <a href="{{ url_for('products', status='low_stock') }}" class="text-decoration-none text-white d-block">
+            <div class="card dashboard-card bg-gradient-red text-white shadow-sm p-3 h-100 animate-card delay-2">
+                <div class="card-body d-flex align-items-center justify-content-between">
+                    <div>
+                        <h6 class="text-white text-opacity-75 small fw-semibold mb-1">Low Stock Items</h6>
+                        <h2 class="fw-extrabold mb-0">{{ low_stock_items }}</h2>
+                    </div>
+                    <div class="text-white text-opacity-25 fs-1">
+                        <i class="bi bi-exclamation-triangle"></i>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+    <!-- Card 3: Stock In Today -->
+    <div class="col-md-3">
+        <div class="card dashboard-card bg-gradient-green text-white shadow-sm p-3 h-100 animate-card delay-3">
+            <div class="card-body d-flex align-items-center justify-content-between">
+                <div>
+                    <h6 class="text-white text-opacity-75 small fw-semibold mb-1">Stock In Today</h6>
+                    <h2 class="fw-extrabold mb-0">{{ stock_in_today }}</h2>
+                </div>
+                <div class="text-white text-opacity-25 fs-1">
+                    <i class="bi bi-arrow-down-circle"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Card 4: Stock Out Today -->
+    <div class="col-md-3">
+        <div class="card dashboard-card bg-gradient-orange text-white shadow-sm p-3 h-100 animate-card delay-4">
+            <div class="card-body d-flex align-items-center justify-content-between">
+                <div>
+                    <h6 class="text-white text-opacity-75 small fw-semibold mb-1">Stock Out Today</h6>
+                    <h2 class="fw-extrabold mb-0">{{ stock_out_today }}</h2>
+                </div>
+                <div class="text-white text-opacity-25 fs-1">
+                    <i class="bi bi-arrow-up-circle"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 2 Column Layout (Bar Chart & Recent Transactions) -->
+<div class="row mb-4">
+    <!-- Left Column: Bar Chart -->
+    <div class="col-lg-7 col-xl-8 mb-4 mb-lg-0">
+        <div class="card shadow-sm border-0 h-100 rounded-3">
+            <div class="card-header bg-white py-3 border-bottom-0">
+                <h5 class="fw-bold mb-0 text-dark">Top 5 Best-Selling Products</h5>
+                <p class="text-muted small mb-0">Total quantities sold across all stock out entries</p>
+            </div>
+            <div class="card-body">
+                <div style="position: relative; height: 320px;">
+                    <canvas id="topSellingChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Right Column: Recent Transactions List -->
+    <div class="col-lg-5 col-xl-4">
+        <div class="card shadow-sm border-0 h-100 rounded-3">
+            <div class="card-header bg-white py-3 border-bottom-0 d-flex align-items-center justify-content-between">
+                <h5 class="fw-bold mb-0 text-dark">Recent Activity</h5>
+                <a href="{{ url_for('stock_movements') }}" class="btn btn-outline-secondary btn-sm px-2 py-1">View All</a>
+            </div>
+            <div class="card-body p-0">
+                {% if recent_movements %}
+                <div class="list-group list-group-flush" style="max-height: 330px; overflow-y: auto;">
+                    {% for m in recent_movements %}
+                    <div class="list-group-item px-3 py-2.5 border-0 border-bottom d-flex justify-content-between align-items-center">
+                        <div class="min-w-0">
+                            <div class="fw-semibold text-dark text-truncate small">{{ m.product_name }}</div>
+                            <span class="text-muted small" style="font-size: 0.75rem;">{{ m.username }} &bull; {{ m.note or 'No notes' }}</span>
+                        </div>
+                        <div class="text-end">
+                            {% if m.movement_type == 'in' %}
+                            <span class="badge bg-success bg-opacity-10 text-success fw-bold">+{{ m.quantity }}</span>
+                            {% else %}
+                            <span class="badge bg-warning bg-opacity-10 text-warning fw-bold">-{{ m.quantity }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <p class="text-muted small mb-0">No movements recorded yet.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bottom Section: Warehouse Summary and Expiry Tracker -->
+<div class="row mb-4">
+    <!-- Warehouse summary table -->
+    <div class="col-lg-8 mb-4 mb-lg-0">
+        <div class="card shadow-sm border-0 h-100 rounded-3">
+            <div class="card-header bg-white py-3 d-flex align-items-center justify-content-between border-bottom-0">
+                <h5 class="fw-bold mb-0 text-dark">Warehouse Stock Allocation</h5>
+                {% if session.get('role') == 'admin' %}
+                <a href="{{ url_for('warehouses') }}" class="btn btn-sm btn-outline-primary px-2 py-1">Manage</a>
+                {% endif %}
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th class="ps-3 text-muted">Warehouse</th>
+                            <th class="text-muted">Location</th>
+                            <th class="text-muted">Manager</th>
+                            <th class="text-muted">Stock Qty</th>
+                            <th class="pe-3 text-end text-muted">Valuation</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for ws in warehouse_summary %}
+                        <tr>
+                            <td class="ps-3 fw-semibold text-dark">{{ ws.name }}</td>
+                            <td>{{ ws.location }}</td>
+                            <td>{{ ws.manager_name }}</td>
+                            <td><span class="badge bg-light text-dark border">{{ ws.total_quantity }} units</span></td>
+                            <td class="pe-3 text-end fw-bold text-success">${{ "%.2f" | format(ws.total_value) }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions Panel -->
+    <div class="col-lg-4">
+        <div class="card shadow-sm border-0 h-100 rounded-3">
+            <div class="card-header bg-white py-3 border-bottom-0">
+                <h5 class="fw-bold mb-0 text-dark">Quick Operations</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    {% if session.get('role') == 'admin' %}
+                    <a href="{{ url_for('add_product') }}" class="btn btn-outline-primary text-start d-flex align-items-center gap-2">
+                        <i class="bi bi-plus-circle-fill"></i> Add New Product
+                    </a>
+                    {% endif %}
+                    <a href="{{ url_for('stock_in') }}" class="btn btn-outline-success text-start d-flex align-items-center gap-2">
+                        <i class="bi bi-arrow-down-circle-fill"></i> Record Stock In
+                    </a>
+                    <a href="{{ url_for('stock_out') }}" class="btn btn-outline-warning text-start d-flex align-items-center gap-2">
+                        <i class="bi bi-arrow-up-circle-fill"></i> Record Stock Out
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Expiry Tracker Panel -->
+{% if expired_products or expiring_soon %}
+<div class="row">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm rounded-3">
+            <div class="card-header bg-white py-3 d-flex align-items-center justify-content-between border-bottom-0">
+                <h5 class="fw-bold mb-0 text-dark">Expiry Date Tracker</h5>
+                <a href="{{ url_for('products', status='expiring_soon') }}" class="btn btn-sm btn-outline-warning px-2 py-1">View Expiries</a>
+            </div>
+            <div class="card-body p-0">
+                {% if expired_products %}
+                <div class="px-3 pt-3">
+                    <span class="badge bg-danger mb-2">Expired Items</span>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <tbody>
+                            {% for p in expired_products %}
+                            <tr class="table-danger">
+                                <td class="ps-3 fw-semibold text-danger">{{ p.name }}</td>
+                                <td><span class="badge bg-light text-dark border">{{ p.category }}</span></td>
+                                <td><span class="text-danger fw-bold">{{ p.quantity }} units</span></td>
+                                <td class="pe-3 text-end"><span class="badge bg-danger">{{ p.expiry_date }}</span></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% endif %}
+
+                {% if expiring_soon %}
+                <div class="px-3 pt-3">
+                    <span class="badge bg-warning text-dark mb-2">Expiring Soon (Next 30 Days)</span>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <tbody>
+                            {% for p in expiring_soon %}
+                            <tr class="table-warning">
+                                <td class="ps-3 fw-semibold text-dark">{{ p.name }}</td>
+                                <td><span class="badge bg-light text-dark border">{{ p.category }}</span></td>
+                                <td><span class="fw-bold text-dark">{{ p.quantity }} units</span></td>
+                                <td class="pe-3 text-end">
+                                    <span class="badge bg-warning text-dark">{{ p.days_left }} days left</span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Load Chart.js and script -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const ctx = document.getElementById('topSellingChart').getContext('2d');
+    
+    const labels = {{ top_selling_labels | tojson }};
+    const values = {{ top_selling_values | tojson }};
+    
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: values,
+                backgroundColor: 'rgba(79, 70, 229, 0.85)',
+                hoverBackgroundColor: '#4f46e5',
+                borderRadius: 6,
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                x: {
+                    grid: {
+                        display: false
+                    },
+                    ticks: {
+                        font: {
+                            family: 'Inter, system-ui, sans-serif',
+                            size: 11
+                        },
+                        color: '#64748b'
+                    }
+                },
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: '#f1f5f9'
+                    },
+                    ticks: {
+                        font: {
+                            family: 'Inter, system-ui, sans-serif',
+                            size: 11
+                        },
+                        color: '#64748b',
+                        precision: 0
+                    }
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

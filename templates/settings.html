@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% block title %}System Settings - Stock Manager{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-7">
+        
+        <!-- Header / Breadcrumb -->
+        <div class="mb-4 d-flex align-items-center justify-content-between">
+            <div>
+                <h1 class="fw-bold h2 mb-1 text-dark">System Settings</h1>
+                <p class="text-muted small mb-0">Configure notification alerts, SMTP credentials, and SMS API integrations</p>
+            </div>
+        </div>
+
+        <form method="POST" action="{{ url_for('settings') }}">
+            
+            <!-- Email Notifications Card -->
+            <div class="card shadow-sm border-0 mb-4 rounded-3">
+                <div class="card-header bg-white py-3 border-bottom-0">
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="bg-primary bg-opacity-10 text-primary p-2 rounded-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-envelope-fill" viewBox="0 0 16 16">
+                                <path d="M.05 3.555A2 2 0 0 1 2 2h12a2 2 0 0 1 1.95 1.555L8 8.414.05 3.555ZM0 4.697v7.104l5.803-3.558L0 4.697ZM6.761 8.83l-6.57 4.027A2 2 0 0 0 2 14h12a2 2 0 0 0 1.808-1.144l-6.57-4.027L8 9.586l-.239-.239ZM10.197 9.274l5.803 3.558V4.697l-5.803 4.577Z"/>
+                            </svg>
+                        </div>
+                        <h5 class="fw-bold mb-0">Email Notification Settings</h5>
+                    </div>
+                </div>
+                <div class="card-body pt-0">
+                    <hr class="mt-0 mb-3 text-muted opacity-25">
+                    
+                    <div class="mb-3">
+                        <label for="admin_email" class="form-label fw-semibold">Admin Recipient Email Address</label>
+                        <input type="email" class="form-control form-control-lg" id="admin_email" name="admin_email" 
+                               value="{{ admin_email }}" placeholder="admin@example.com">
+                        <div class="form-text">System notifications (low stock, received purchase orders) will be sent to this email.</div>
+                    </div>
+                    
+                    <div class="bg-light p-3 rounded border text-muted small">
+                        <div class="fw-bold mb-1"><i class="bi bi-info-circle me-1"></i> SMTP Server Note</div>
+                        Emails are routed via the system SMTP server (`smtp.gmail.com` on port 587) using background TLS connections. Ensure appropriate environment variables (`MAIL_USERNAME` and `MAIL_PASSWORD`) are configured on your hosting provider or local `.env` configuration file if sending to real domains.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Twilio SMS Settings Card -->
+            <div class="card shadow-sm border-0 mb-4 rounded-3">
+                <div class="card-header bg-white py-3 border-bottom-0">
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="bg-warning bg-opacity-10 text-warning p-2 rounded-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-chat-left-dots-fill" viewBox="0 0 16 16">
+                                <path d="M0 2a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H4.414a1 1 0 0 0-.707.293L.854 15.146A.5.5 0 0 1 0 14.793V2zm5 4a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm3 1a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm3 1a1 1 0 1 0 0-2 1 1 0 0 0 0 2z"/>
+                            </svg>
+                        </div>
+                        <h5 class="fw-bold mb-0">Twilio SMS Configuration</h5>
+                    </div>
+                </div>
+                <div class="card-body pt-0">
+                    <hr class="mt-0 mb-3 text-muted opacity-25">
+                    
+                    <div class="mb-3">
+                        <label for="admin_phone_number" class="form-label fw-semibold">Admin Recipient Phone Number</label>
+                        <input type="text" class="form-control form-control-lg" id="admin_phone_number" name="admin_phone_number" 
+                               value="{{ admin_phone_number }}" placeholder="e.g. +15551234567">
+                        <div class="form-text">Mobile phone number to receive critical low stock alert notifications (requires international E.164 format).</div>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label for="twilio_sid" class="form-label fw-semibold">Twilio Account SID</label>
+                            <input type="text" class="form-control" id="twilio_sid" name="twilio_sid" 
+                                   value="{{ twilio_sid }}" placeholder="ACXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="twilio_auth_token" class="form-label fw-semibold">Twilio Auth Token</label>
+                            <input type="password" class="form-control" id="twilio_auth_token" name="twilio_auth_token" 
+                                   value="{{ twilio_auth_token }}" placeholder="••••••••••••••••••••••••••••••••">
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="twilio_phone_number" class="form-label fw-semibold">Twilio Sender Phone Number</label>
+                        <input type="text" class="form-control" id="twilio_phone_number" name="twilio_phone_number" 
+                               value="{{ twilio_phone_number }}" placeholder="e.g. +15017122661">
+                        <div class="form-text">Your registered Twilio phone number.</div>
+                    </div>
+
+                    <div class="bg-light p-3 rounded border text-muted small">
+                        <div class="fw-semibold text-warning mb-1"><i class="bi bi-exclamation-triangle-fill me-1"></i> Critical low stock alerts only</div>
+                        To prevent high SMS carrier usage, text alerts are triggered only under critical situations where stock levels fall below 50% of the product's min threshold target.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action buttons -->
+            <div class="d-flex justify-content-end gap-2 mb-5">
+                <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary px-4">Cancel</a>
+                <button type="submit" class="btn btn-primary px-4 d-flex align-items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-save-fill" viewBox="0 0 16 16">
+                      <path d="M8.5 1.5A1.5 1.5 0 0 1 10 0h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2h6c-.3.4-.5.9-.5 1.5v12c0 .3.2.5.5.5h8c.3 0 .5-.2.5-.5V3.5a1.5 1.5 0 0 0-1.5-1.5h-4v-1h3V1h-3V0h-1v2H8.5V1.5z"/>
+                    </svg>
+                    Save Settings
+                </button>
+            </div>
+            
+        </form>
+
+    </div>
+</div>
+{% endblock %}

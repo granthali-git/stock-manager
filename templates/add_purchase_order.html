@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block title %}Create Purchase Order - Stock Manager{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-7">
+        <div class="mb-3">
+            <a href="{{ url_for('purchase_orders') }}" class="text-decoration-none d-inline-flex align-items-center text-muted small">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-left me-1" viewBox="0 0 16 16">
+                    <path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z"/>
+                </svg>
+                Back to Purchase Orders
+            </a>
+        </div>
+        <div class="card shadow-sm">
+            <div class="card-body p-4">
+                <div class="d-flex align-items-center mb-4">
+                    <div class="bg-primary bg-opacity-10 text-primary p-3 rounded-3 me-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="currentColor" class="bi bi-clipboard-plus" viewBox="0 0 16 16">
+                            <path fill-rule="evenodd" d="M8 7a.5.5 0 0 1 .5.5V9H10a.5.5 0 0 1 0 1H8.5v1.5a.5.5 0 0 1-1 0V10H6a.5.5 0 0 1 0-1h1.5V7.5A.5.5 0 0 1 8 7z"/>
+                            <path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z"/>
+                            <path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h3zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h2 class="fw-bold mb-0">Create Purchase Order</h2>
+                        <p class="text-muted mb-0 small">Place a new purchase order with a supplier</p>
+                    </div>
+                </div>
+
+                {% if not supplier_list %}
+                <div class="alert alert-warning" role="alert">
+                    <h5 class="alert-heading fw-bold">No Suppliers Found!</h5>
+                    <p class="mb-0">You must add at least one supplier before you can create a purchase order. <a href="{{ url_for('add_supplier') }}" class="alert-link">Add Supplier Now</a></p>
+                </div>
+                {% elif not product_list %}
+                <div class="alert alert-warning" role="alert">
+                    <h5 class="alert-heading fw-bold">No Products Found!</h5>
+                    <p class="mb-0">You must add at least one product before you can create a purchase order. <a href="{{ url_for('add_product') }}" class="alert-link">Add Product Now</a></p>
+                </div>
+                {% else %}
+                <form method="POST" action="{{ url_for('add_purchase_order') }}" class="needs-validation" novalidate>
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <div class="form-floating">
+                                <select class="form-select" id="supplier_id" name="supplier_id" required>
+                                    <option value="">-- Select a supplier --</option>
+                                    {% for s in supplier_list %}
+                                        <option value="{{ s.id }}">{{ s.name }}</option>
+                                    {% endfor %}
+                                </select>
+                                <label for="supplier_id">Supplier *</label>
+                                <div class="invalid-feedback">Please select a supplier.</div>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="form-floating">
+                                <select class="form-select" id="product_id" name="product_id" required>
+                                    <option value="">-- Select a product --</option>
+                                    {% for p in product_list %}
+                                        <option value="{{ p.id }}">{{ p.name }}</option>
+                                    {% endfor %}
+                                </select>
+                                <label for="product_id">Product *</label>
+                                <div class="invalid-feedback">Please select a product.</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-floating">
+                                <input type="number" min="1" class="form-control" id="quantity" name="quantity" placeholder="Quantity" required>
+                                <label for="quantity">Quantity *</label>
+                                <div class="invalid-feedback">Please enter a quantity of 1 or more.</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-floating">
+                                <input type="date" class="form-control" id="order_date" name="order_date" value="{{ today }}" placeholder="Order Date" required>
+                                <label for="order_date">Order Date *</label>
+                                <div class="invalid-feedback">Please choose an order date.</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-4 pt-3 border-top d-flex justify-content-end gap-2">
+                        <a href="{{ url_for('purchase_orders') }}" class="btn btn-outline-secondary px-4">Cancel</a>
+                        <button type="submit" class="btn btn-primary px-4 d-flex align-items-center justify-content-center">Create Order</button>
+                    </div>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

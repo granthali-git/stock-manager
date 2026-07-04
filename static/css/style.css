@@ -1,0 +1,244 @@
+/* Custom Styles for Stock Manager */
+:root {
+    --sidebar-bg: #0f172a;
+    --sidebar-hover-bg: #1e293b;
+    --sidebar-active-bg: #4f46e5;
+    --primary-color: #4f46e5;
+    --primary-hover: #4338ca;
+    --bg-light: #f4f6f9;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: var(--bg-light);
+    color: #1e293b;
+}
+
+/* Sidebar Styling */
+.sidebar {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 1050;
+    width: 260px;
+    padding: 0;
+    background-color: var(--sidebar-bg);
+    box-shadow: 4px 0 10px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow-y: auto;
+}
+
+.sidebar .brand-wrapper {
+    padding: 20px 24px;
+    background-color: #020617;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.sidebar .nav-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 24px;
+    color: #94a3b8;
+    font-weight: 500;
+    font-size: 0.95rem;
+    border-left: 4px solid transparent;
+    transition: all 0.2s ease;
+}
+
+.sidebar .nav-link:hover {
+    color: #f1f5f9;
+    background-color: var(--sidebar-hover-bg);
+}
+
+.sidebar .nav-link.active {
+    color: #ffffff;
+    background-color: var(--sidebar-active-bg);
+    border-left-color: #a5b4fc;
+}
+
+.sidebar .nav-link i {
+    font-size: 1.15rem;
+}
+
+/* Main Content Area */
+.main-content {
+    margin-left: 260px;
+    min-height: 100vh;
+    background-color: var(--bg-light);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Top Header */
+.top-navbar {
+    background-color: #ffffff;
+    border-bottom: 1px solid #e2e8f0;
+    padding: 16px 30px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+.content-body {
+    padding: 30px;
+}
+
+/* Card Styling */
+.card {
+    border: none !important;
+    border-radius: 10px !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03) !important;
+    background-color: #ffffff;
+    margin-bottom: 24px;
+}
+
+.card-header {
+    border-bottom: 1px solid #f1f5f9 !important;
+    background-color: transparent !important;
+}
+
+/* Buttons */
+.btn {
+    border-radius: 8px !important;
+    font-weight: 500;
+    padding: 8px 16px;
+    transition: all 0.2s ease;
+}
+
+.btn-primary {
+    background-color: var(--primary-color) !important;
+    border-color: var(--primary-color) !important;
+}
+
+.btn-primary:hover {
+    background-color: var(--primary-hover) !important;
+    border-color: var(--primary-hover) !important;
+}
+
+/* Badges & Tables */
+.badge {
+    border-radius: 6px !important;
+    padding: 6px 10px !important;
+    font-weight: 600;
+}
+
+.table {
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.table th {
+    background-color: #f8fafc;
+    border-bottom: 2px solid #e2e8f0;
+    color: #475569;
+    font-weight: 600;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.table td {
+    vertical-align: middle;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+/* Mobile Responsive Styles & Upgrades */
+@media (max-width: 991.98px) {
+    .sidebar {
+        margin-left: -260px;
+    }
+    .sidebar.show {
+        margin-left: 0;
+    }
+    .main-content {
+        margin-left: 0;
+    }
+    .top-navbar {
+        padding: 12px 16px;
+    }
+    .content-body {
+        padding: 16px;
+    }
+    
+    /* Sidebar Backdrop Blur overlay */
+    .sidebar.show ~ .main-content::before {
+        content: "";
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(15, 23, 42, 0.4);
+        backdrop-filter: blur(2px);
+        z-index: 1040;
+        animation: fadeIn 0.2s ease-out;
+    }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* Fluid Typography and Touch Targets on Mobile Viewports */
+@media (max-width: 575.98px) {
+    body {
+        font-size: 0.9rem;
+    }
+    h1, .h1 { font-size: 1.65rem !important; }
+    h2, .h2 { font-size: 1.4rem !important; }
+    h3, .h3 { font-size: 1.25rem !important; }
+    .display-4 { font-size: 2.0rem !important; }
+    
+    .content-body {
+        padding: 12px !important;
+    }
+    
+    /* Touch Target Sizing (Min 44px) */
+    .btn, .form-select, .form-control {
+        min-height: 44px;
+        padding-top: 8px !important;
+        padding-bottom: 8px !important;
+    }
+    
+    /* Form floating custom sizing for mobile */
+    .form-floating > .form-control,
+    .form-floating > .form-select {
+        height: 52px;
+        min-height: 52px;
+        padding-top: 1.625rem !important;
+        padding-bottom: 0.625rem !important;
+    }
+    
+    /* Full-screen Modal styling for mobile touch interactions */
+    .modal-fullscreen-sm-down .modal-content {
+        border-radius: 0 !important;
+        border: none !important;
+        min-height: 100vh;
+    }
+    .modal-fullscreen-sm-down .modal-header {
+        border-radius: 0 !important;
+        position: sticky;
+        top: 0;
+        z-index: 1060;
+        background: #ffffff;
+        border-bottom: 1px solid #e2e8f0;
+    }
+    .modal-fullscreen-sm-down .modal-body {
+        padding: 16px !important;
+    }
+    .modal-fullscreen-sm-down .modal-footer {
+        border-radius: 0 !important;
+        position: sticky;
+        bottom: 0;
+        z-index: 1060;
+        background: #ffffff;
+        border-top: 1px solid #e2e8f0;
+    }
+}
+
+/* Horizontal Table Scrolling */
+.table-responsive th,
+.table-responsive td {
+    white-space: nowrap;
+}
+

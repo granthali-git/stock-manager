@@ -1,0 +1,283 @@
+{% extends "base.html" %}
+{% block title %}Record Stock Out - Stock Manager{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-7">
+        <!-- Back link -->
+        <div class="mb-3">
+            <a href="{{ url_for('stock_movements') }}" class="text-decoration-none d-inline-flex align-items-center text-muted small">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-left me-1" viewBox="0 0 16 16">
+                    <path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z"/>
+                </svg>
+                Back to Stock Movements
+            </a>
+        </div>
+
+        <div class="card shadow-sm p-4">
+            <div class="card-body">
+                <!-- Header -->
+                <div class="d-flex align-items-center mb-4">
+                    <div class="bg-warning bg-opacity-10 text-warning p-3 rounded-3 me-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="currentColor" class="bi bi-arrow-up-circle-fill" viewBox="0 0 16 16">
+                            <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-7.5 3.5a.5.5 0 0 0 1 0V5.707l2.146 2.147a.5.5 0 0 0 .708-.708l-3-3a.5.5 0 0 0-.708 0l-3 3a.5.5 0 1 0 .708.708L7.5 5.707V11.5z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h2 class="fw-bold mb-0">Record Stock Out</h2>
+                        <p class="text-muted mb-0 small">Remove outgoing stock &amp; generate an invoice automatically</p>
+                    </div>
+                </div>
+
+                <form method="POST" action="{{ url_for('stock_out') }}" id="stockOutForm" class="needs-validation" novalidate>
+                    <div class="row g-3">
+
+                        <!-- Customer Name -->
+                        <div class="col-12">
+                            <div class="form-floating">
+                                <input type="text" class="form-control" id="customer_name" name="customer_name" placeholder="Customer Name" required>
+                                <label for="customer_name">Customer Name *</label>
+                                <div class="invalid-feedback">Please enter the customer name for the invoice.</div>
+                            </div>
+                        </div>
+
+                        <!-- Product -->
+                        <div class="col-12">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="fw-semibold text-muted small">Select Product *</span>
+                                <button type="button" class="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1" id="btnScanBarcode">
+                                    <i class="bi bi-camera-fill"></i> Scan Barcode
+                                </button>
+                            </div>
+                            <div class="form-floating">
+                                <select class="form-select" id="product_id" name="product_id" required>
+                                    <option value="">-- Select a product --</option>
+                                    {% for p in product_list %}
+                                        <option value="{{ p.id }}" data-price="{{ p.price }}" data-stock="{{ p.quantity }}" data-barcode="{{ p.barcode or '' }}">
+                                            {{ p.name }} — ${{ "%.2f" | format(p.price) }} (Available: {{ p.quantity }})
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                                <label for="product_id">Product</label>
+                                <div class="invalid-feedback">Please select a product.</div>
+                            </div>
+                        </div>
+
+                        <!-- Quantity -->
+                        <div class="col-md-6">
+                            <div class="form-floating">
+                                <input type="number" min="1" class="form-control" id="quantity" name="quantity" placeholder="Quantity" required>
+                                <label for="quantity">Quantity to Remove *</label>
+                                <div class="invalid-feedback">Please enter a valid quantity of 1 or more.</div>
+                            </div>
+                        </div>
+
+                        <!-- Note -->
+                        <div class="col-md-6">
+                            <div class="form-floating">
+                                <input type="text" class="form-control" id="note" name="note" placeholder="Note">
+                                <label for="note">Note (Optional)</label>
+                            </div>
+                        </div>
+
+                        <!-- Live invoice preview -->
+                        <div class="col-12" id="invoicePreview" style="display:none;">
+                            <div class="card border-0 rounded-3" style="background:linear-gradient(135deg,#4f46e510,#e0e7ff30);border:1.5px solid #c7d2fe !important;">
+                                <div class="card-body py-3 px-4">
+                                    <div class="d-flex align-items-center gap-2 mb-2">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="#4f46e5" class="bi bi-receipt" viewBox="0 0 16 16">
+                                            <path d="M1.92.506a.5.5 0 0 1 .434.14L3 1.293l.646-.647a.5.5 0 0 1 .708 0L5 1.293l.646-.647a.5.5 0 0 1 .708 0L7 1.293l.646-.647a.5.5 0 0 1 .708 0L9 1.293l.646-.647a.5.5 0 0 1 .708 0l.646.647.646-.647a.5.5 0 0 1 .708 0l.646.647.646-.647a.5.5 0 0 1 .801.13l.5 1A.5.5 0 0 1 15 2v12a.5.5 0 0 1-.053.224l-.5 1a.5.5 0 0 1-.8.13L13 14.707l-.646.647a.5.5 0 0 1-.708 0L11 14.707l-.646.647a.5.5 0 0 1-.708 0L9 14.707l-.646.647a.5.5 0 0 1-.708 0L7 14.707l-.646.647a.5.5 0 0 1-.708 0L5 14.707l-.646.647a.5.5 0 0 1-.708 0L3 14.707l-.646.647a.5.5 0 0 1-.801-.13l-.5-1A.5.5 0 0 1 1 14V2a.5.5 0 0 1 .053-.224l.5-1a.5.5 0 0 1 .367-.27zm.217 1.338L2 2.118v11.764l.137.274.51-.51a.5.5 0 0 1 .707 0l.646.647.646-.646a.5.5 0 0 1 .708 0l.646.646.646-.646a.5.5 0 0 1 .708 0l.646.646.646-.646a.5.5 0 0 1 .708 0l.646.646.646-.646a.5.5 0 0 1 .708 0l.509.509.137-.274V2.118l-.137-.274-.51.51a.5.5 0 0 1-.707 0L12 1.707l-.646.647a.5.5 0 0 1-.708 0L10 1.707l-.646.647a.5.5 0 0 1-.708 0L8 1.707l-.646.647a.5.5 0 0 1-.708 0L6 1.707l-.646.647a.5.5 0 0 1-.708 0L4 1.707l-.646.647a.5.5 0 0 1-.708 0l-.509-.51-.137.274z"/>
+                                            <path d="M3 4.5a.5.5 0 0 1 .5-.5h6a.5.5 0 1 1 0 1h-6a.5.5 0 0 1-.5-.5zm0 2a.5.5 0 0 1 .5-.5h6a.5.5 0 1 1 0 1h-6a.5.5 0 0 1-.5-.5zm0 2a.5.5 0 0 1 .5-.5h6a.5.5 0 1 1 0 1h-6a.5.5 0 0 1-.5-.5zm0 2a.5.5 0 0 1 .5-.5h6a.5.5 0 1 1 0 1h-6a.5.5 0 0 1-.5-.5zm8-6a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 0 1h-1a.5.5 0 0 1-.5-.5zm0 2a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 0 1h-1a.5.5 0 0 1-.5-.5zm0 2a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 0 1h-1a.5.5 0 0 1-.5-.5zm0 2a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 0 1h-1a.5.5 0 0 1-.5-.5z"/>
+                                        </svg>
+                                        <span class="fw-semibold text-primary small">Invoice Preview</span>
+                                    </div>
+                                    <div class="row small">
+                                        <div class="col-6">
+                                            <span class="text-muted">Unit Price:</span>
+                                            <span class="fw-semibold ms-1" id="previewUnitPrice">—</span>
+                                        </div>
+                                        <div class="col-6">
+                                            <span class="text-muted">Qty:</span>
+                                            <span class="fw-semibold ms-1" id="previewQty">—</span>
+                                        </div>
+                                    </div>
+                                    <div class="mt-2 pt-2 border-top d-flex justify-content-between align-items-center">
+                                        <span class="text-muted small">Estimated Total</span>
+                                        <span class="fw-bold fs-5 text-primary" id="previewTotal">$0.00</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-warning d-flex align-items-center mt-3 mb-0 small" role="alert">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-exclamation-triangle-fill flex-shrink-0 me-2" viewBox="0 0 16 16">
+                            <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
+                        </svg>
+                        Stock Out will be blocked if quantity entered exceeds current available stock. An invoice will be auto-generated.
+                    </div>
+
+                    <div class="mt-4 pt-3 border-top d-flex justify-content-end gap-2">
+                        <a href="{{ url_for('stock_movements') }}" class="btn btn-outline-secondary px-4">Cancel</a>
+                        <button type="submit" class="btn btn-warning px-4 d-flex align-items-center justify-content-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-receipt me-2" viewBox="0 0 16 16">
+                                <path d="M1.92.506a.5.5 0 0 1 .434.14L3 1.293l.646-.647a.5.5 0 0 1 .708 0L5 1.293l.646-.647a.5.5 0 0 1 .708 0L7 1.293l.646-.647a.5.5 0 0 1 .708 0L9 1.293l.646-.647a.5.5 0 0 1 .708 0l.646.647.646-.647a.5.5 0 0 1 .708 0l.646.647.646-.647a.5.5 0 0 1 .801.13l.5 1A.5.5 0 0 1 15 2v12a.5.5 0 0 1-.053.224l-.5 1a.5.5 0 0 1-.8.13L13 14.707l-.646.647a.5.5 0 0 1-.708 0L11 14.707l-.646.647a.5.5 0 0 1-.708 0L9 14.707l-.646.647a.5.5 0 0 1-.708 0L7 14.707l-.646.647a.5.5 0 0 1-.708 0L5 14.707l-.646.647a.5.5 0 0 1-.708 0L3 14.707l-.646.647a.5.5 0 0 1-.801-.13l-.5-1A.5.5 0 0 1 1 14V2a.5.5 0 0 1 .053-.224l.5-1a.5.5 0 0 1 .367-.27zm.217 1.338L2 2.118v11.764l.137.274.51-.51a.5.5 0 0 1 .707 0l.646.647.646-.646a.5.5 0 0 1 .708 0l.646.646.646-.646a.5.5 0 0 1 .708 0l.646.646.646-.646a.5.5 0 0 1 .708 0l.646.646.646-.646a.5.5 0 0 1 .708 0l.509.509.137-.274V2.118l-.137-.274-.51.51a.5.5 0 0 1-.707 0L12 1.707l-.646.647a.5.5 0 0 1-.708 0L10 1.707l-.646.647a.5.5 0 0 1-.708 0L8 1.707l-.646.647a.5.5 0 0 1-.708 0L6 1.707l-.646.647a.5.5 0 0 1-.708 0L4 1.707l-.646.647a.5.5 0 0 1-.708 0l-.509-.51-.137.274z"/>
+                                <path d="M3 4.5a.5.5 0 0 1 .5-.5h6a.5.5 0 1 1 0 1h-6a.5.5 0 0 1-.5-.5zm0 2a.5.5 0 0 1 .5-.5h6a.5.5 0 1 1 0 1h-6a.5.5 0 0 1-.5-.5zm0 2a.5.5 0 0 1 .5-.5h6a.5.5 0 1 1 0 1h-6a.5.5 0 0 1-.5-.5zm0 2a.5.5 0 0 1 .5-.5h6a.5.5 0 1 1 0 1h-6a.5.5 0 0 1-.5-.5zm8-6a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 0 1h-1a.5.5 0 0 1-.5-.5zm0 2a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 0 1h-1a.5.5 0 0 1-.5-.5zm0 2a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 0 1h-1a.5.5 0 0 1-.5-.5zm0 2a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 0 1h-1a.5.5 0 0 1-.5-.5z"/>
+                            </svg>
+                            Confirm Stock Out &amp; Generate Invoice
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# ── Scanner Modal ── #}
+<div class="modal fade" id="scannerModal" tabindex="-1" aria-labelledby="scannerModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold" id="scannerModalLabel">Scan Barcode</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center position-relative p-0" style="background:#000; min-height:350px;">
+                <div id="interactive" class="viewport w-100" style="height:350px; overflow:hidden;"></div>
+                <div class="position-absolute top-50 start-50 translate-middle pointer-events-none" style="border:2px dashed #0d6efd; width:80%; height:50%; box-sizing:border-box; z-index:10;"></div>
+                <div class="position-absolute bottom-0 start-50 translate-middle-x bg-dark bg-opacity-75 text-white w-100 py-2 small" style="z-index:11;">
+                    Align barcode inside the bounding box
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">Cancel Scan</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+#interactive.viewport {
+    position: relative;
+    width: 100%;
+    height: 350px;
+}
+#interactive.viewport > video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+#interactive.viewport > canvas {
+    display: none;
+}
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/@ericblade/quagga2/dist/quagga.min.js"></script>
+<script>
+// Live invoice preview
+const productSelect = document.getElementById('product_id');
+const qtyInput      = document.getElementById('quantity');
+const preview       = document.getElementById('invoicePreview');
+const previewUnit   = document.getElementById('previewUnitPrice');
+const previewQty    = document.getElementById('previewQty');
+const previewTotal  = document.getElementById('previewTotal');
+
+function updatePreview() {
+    const opt   = productSelect.options[productSelect.selectedIndex];
+    const price = parseFloat(opt.dataset.price) || 0;
+    const qty   = parseInt(qtyInput.value) || 0;
+
+    if (productSelect.value && qty > 0) {
+        previewUnit.textContent  = '$' + price.toFixed(2);
+        previewQty.textContent   = qty;
+        previewTotal.textContent = '$' + (price * qty).toFixed(2);
+        preview.style.display    = '';
+    } else {
+        preview.style.display = 'none';
+    }
+}
+productSelect.addEventListener('change', updatePreview);
+qtyInput.addEventListener('input', updatePreview);
+
+// Scanner setup
+let scanning = false;
+
+document.getElementById('btnScanBarcode').addEventListener('click', function() {
+    const modal = new bootstrap.Modal(document.getElementById('scannerModal'));
+    modal.show();
+});
+
+document.getElementById('scannerModal').addEventListener('shown.bs.modal', function () {
+    startScanner();
+});
+
+document.getElementById('scannerModal').addEventListener('hidden.bs.modal', function () {
+    stopScanner();
+});
+
+function startScanner() {
+    Quagga.init({
+        inputStream : {
+            name : "Live",
+            type : "LiveStream",
+            target: document.querySelector('#interactive'),
+            constraints: {
+                facingMode: "environment"
+            }
+        },
+        decoder : {
+            readers : ["code_128_reader", "ean_reader", "ean_8_reader", "code_39_reader", "upc_reader"]
+        }
+    }, function(err) {
+        if (err) {
+            console.error(err);
+            alert("Failed to start camera scanner: " + err);
+            bootstrap.Modal.getInstance(document.getElementById('scannerModal')).hide();
+            return;
+        }
+        Quagga.start();
+        scanning = true;
+    });
+
+    Quagga.onDetected(onBarcodeDetected);
+}
+
+function stopScanner() {
+    if (scanning) {
+        Quagga.stop();
+        scanning = false;
+    }
+}
+
+function onBarcodeDetected(result) {
+    const code = result.codeResult.code;
+    if (code) {
+        try {
+            const context = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = context.createOscillator();
+            osc.frequency.value = 800;
+            osc.connect(context.destination);
+            osc.start();
+            setTimeout(() => osc.stop(), 100);
+        } catch(e) {}
+
+        stopScanner();
+        bootstrap.Modal.getInstance(document.getElementById('scannerModal')).hide();
+
+        let found = false;
+        for (let i = 0; i < productSelect.options.length; i++) {
+            const opt = productSelect.options[i];
+            if (opt.dataset.barcode && opt.dataset.barcode === code) {
+                productSelect.selectedIndex = i;
+                productSelect.dispatchEvent(new Event('change'));
+                found = true;
+                break;
+            }
+        }
+
+        if (!found) {
+            alert("Scanned barcode: " + code + "\nNo matching product registered with this barcode.");
+        }
+    }
+}
+</script>
+{% endblock %}

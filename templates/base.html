@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Stock Manager{% endblock %}</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <!-- Google Fonts (Inter) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+    {% if session.get('user_id') %}
+    <!-- Sidebar Navigation -->
+    <div class="sidebar" id="sidebarMenu">
+        <div class="brand-wrapper">
+            <a class="navbar-brand d-flex align-items-center text-white fw-bold fs-5 text-decoration-none" href="{{ url_for('dashboard') }}">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-box-seam text-primary me-2" viewBox="0 0 16 16">
+                    <path d="M8.186 1.113a.5.5 0 0 0-.372 0L1.846 3.5l2.404.961L10.404 2l-2.218-.887zm3.564 1.426L5.596 5 8 5.961 14.154 3.5l-2.404-.961zm3.25 1.7-6.5 2.6v7.922l6.5-2.6V4.24zM7.5 14.762V6.838L1 4.24v7.922l6.5 2.6zM2.5 3.5a.5.5 0 0 1 0-1h11a.5.5 0 0 1 0 1h-11z"/>
+                </svg>
+                Stock Manager
+            </a>
+        </div>
+        
+        <ul class="nav flex-column mt-3">
+            <li class="nav-item">
+                <a class="nav-link {% if request.path == url_for('dashboard') %}active{% endif %}" href="{{ url_for('dashboard') }}">
+                    <i class="bi bi-grid-1x2-fill"></i>
+                    Dashboard
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if request.path.startswith(url_for('products')) %}active{% endif %}" href="{{ url_for('products') }}">
+                    <i class="bi bi-box-seam-fill"></i>
+                    Products
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if request.path.startswith(url_for('stock_movements')) or request.path.startswith('/stock/') %}active{% endif %}" href="{{ url_for('stock_movements') }}">
+                    <i class="bi bi-arrow-down-up"></i>
+                    Stock Movements
+                </a>
+            </li>
+            
+            {% if session.get('role') == 'admin' %}
+            <li class="nav-item mt-3 px-3 mb-2">
+                <span class="text-uppercase text-muted fw-bold d-block" style="font-size: 0.75rem; letter-spacing: 0.8px;">Procurement</span>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if request.path.startswith(url_for('suppliers')) %}active{% endif %}" href="{{ url_for('suppliers') }}">
+                    <i class="bi bi-people-fill"></i>
+                    Suppliers
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if request.path.startswith(url_for('purchase_orders')) %}active{% endif %}" href="{{ url_for('purchase_orders') }}">
+                    <i class="bi bi-cart-check-fill"></i>
+                    Purchase Orders
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if request.path.startswith(url_for('invoices')) %}active{% endif %}" href="{{ url_for('invoices') }}">
+                    <i class="bi bi-receipt-cutoff"></i>
+                    Invoices
+                </a>
+            </li>
+
+            <li class="nav-item mt-3 px-3 mb-2">
+                <span class="text-uppercase text-muted fw-bold d-block" style="font-size: 0.75rem; letter-spacing: 0.8px;">Management</span>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if request.path.startswith(url_for('reports')) %}active{% endif %}" href="{{ url_for('reports') }}">
+                    <i class="bi bi-bar-chart-line-fill"></i>
+                    Reports &amp; Analytics
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if request.path.startswith(url_for('forecasting')) %}active{% endif %}" href="{{ url_for('forecasting') }}">
+                    <i class="bi bi-cpu-fill"></i>
+                    Demand Forecasting
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if request.path.startswith(url_for('manage_users')) %}active{% endif %}" href="{{ url_for('manage_users') }}">
+                    <i class="bi bi-shield-lock-fill"></i>
+                    User Management
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if request.path.startswith(url_for('warehouses')) %}active{% endif %}" href="{{ url_for('warehouses') }}">
+                    <i class="bi bi-building-fill"></i>
+                    Warehouses
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if request.path.startswith(url_for('settings')) %}active{% endif %}" href="{{ url_for('settings') }}">
+                    <i class="bi bi-gear-fill"></i>
+                    System Settings
+                </a>
+            </li>
+            {% endif %}
+        </ul>
+    </div>
+    {% endif %}
+
+    <!-- Wrapper for Page Layout -->
+    <div class="{% if session.get('user_id') %}main-content{% else %}container py-5{% endif %}">
+        {% if session.get('user_id') %}
+        <!-- Top Navbar -->
+        <nav class="top-navbar d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center">
+                <!-- Hamburger Menu on Mobile -->
+                <button class="btn btn-outline-secondary d-lg-none me-3" id="sidebarToggle">
+                    <i class="bi bi-list"></i>
+                </button>
+                <div>
+                    <h5 class="fw-bold mb-0 text-dark">
+                        {% block title_header %}Stock Manager{% endblock %}
+                    </h5>
+                </div>
+            </div>
+            
+            <div class="d-flex align-items-center gap-3">
+                <div class="text-end d-none d-sm-block">
+                    <div class="fw-semibold text-dark small">{{ session.get('username') }}</div>
+                    {% if session.get('role') == 'admin' %}
+                    <span class="badge" style="background-color:#4f46e5; font-size: 0.7rem;">Admin</span>
+                    {% else %}
+                    <span class="badge bg-secondary" style="font-size: 0.7rem;">Staff</span>
+                    {% endif %}
+                </div>
+                <div class="vr d-none d-sm-block" style="height: 24px;"></div>
+                <a href="{{ url_for('logout') }}" class="btn btn-sm btn-outline-danger d-flex align-items-center gap-1">
+                    <i class="bi bi-box-arrow-right"></i>
+                    <span class="d-none d-sm-inline">Logout</span>
+                </a>
+            </div>
+        </nav>
+        {% endif %}
+
+        <!-- Flash messages and main content body -->
+        <div class="{% if session.get('user_id') %}content-body{% endif %}">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="row justify-content-center mb-4">
+                        <div class="col-md-8 col-lg-6">
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ category }} alert-dismissible fade show shadow-sm" role="alert">
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endif %}
+            {% endwith %}
+
+            {% block content %}{% endblock %}
+        </div>
+    </div>
+
+    <!-- Bootstrap 5 JS Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    <script>
+        // Sidebar responsive menu toggling
+        document.getElementById('sidebarToggle')?.addEventListener('click', function(e) {
+            e.stopPropagation();
+            document.getElementById('sidebarMenu').classList.toggle('show');
+        });
+        document.addEventListener('click', function(event) {
+            const sidebar = document.getElementById('sidebarMenu');
+            const toggleBtn = document.getElementById('sidebarToggle');
+            if (sidebar && !sidebar.contains(event.target) && toggleBtn && !toggleBtn.contains(event.target)) {
+                sidebar.classList.remove('show');
+            }
+        });
+
+        // Bootstrap 5 form validation & loading spinners
+        (function () {
+            'use strict'
+            var forms = document.querySelectorAll('.needs-validation')
+            Array.prototype.slice.call(forms).forEach(function (form) {
+                form.addEventListener('submit', function (event) {
+                    if (!form.checkValidity()) {
+                        event.preventDefault()
+                        event.stopPropagation()
+                    } else {
+                        // Change button to spinner loading state
+                        const submitBtn = form.querySelector('[type="submit"]');
+                        if (submitBtn) {
+                            submitBtn.disabled = true;
+                            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Processing...';
+                        }
+                    }
+                    form.classList.add('was-validated')
+                }, false)
+            })
+        })();
+
+        // Auto-dismiss alert notifications after 3 seconds
+        setTimeout(function() {
+            const alerts = document.querySelectorAll('.alert-dismissible');
+            alerts.forEach(function(alert) {
+                const bsAlert = new bootstrap.Alert(alert);
+                bsAlert.close();
+            });
+        }, 3000);
+    </script>
+</body>
+</html>

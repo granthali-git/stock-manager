@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}Add Warehouse - Stock Manager{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-7">
+        <!-- Back Link -->
+        <div class="mb-3">
+            <a href="{{ url_for('warehouses') }}" class="text-decoration-none d-inline-flex align-items-center text-muted small">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-left me-1" viewBox="0 0 16 16">
+                    <path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z"/>
+                </svg>
+                Back to Warehouses
+            </a>
+        </div>
+
+        <div class="card shadow-sm p-4">
+            <div class="card-body">
+                <!-- Header -->
+                <div class="d-flex align-items-center mb-4">
+                    <div class="bg-primary bg-opacity-10 text-primary p-3 rounded-3 me-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="#4f46e5" class="bi bi-building-add" viewBox="0 0 16 16">
+                            <path d="M12.5 16a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Zm.5-5v1.5a.5.5 0 0 1-1 0V11h-1.5a.5.5 0 0 1 0-1H12V8.5a.5.5 0 0 1 1 0V10h1.5a.5.5 0 0 1 0 1H13Z"/>
+                            <path d="M2 1a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v6.5a.5.5 0 0 1-1 0V1H3v14h3v-2.5a.5.5 0 0 1 .5-.5H8v1.5a.5.5 0 0 1-.5.5H3a1 1 0 0 1-1-1V1Z"/>
+                            <path d="M4.5 2a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5h-1ZM8 2a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5H8Zm3 0a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5h-1ZM4 5.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1ZM7.5 5a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5H7.5Zm3.5.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1ZM4 8.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1Zm3.5-.5a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5H7.5Z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h2 class="fw-bold mb-0">Add New Warehouse</h2>
+                        <p class="text-muted mb-0 small">Create a new storage location in the system</p>
+                    </div>
+                </div>
+
+                <form method="POST" action="{{ url_for('add_warehouse') }}">
+                    <div class="row g-3">
+                        <!-- Name -->
+                        <div class="col-12">
+                            <label for="name" class="form-label fw-semibold">Warehouse Name *</label>
+                            <input type="text" class="form-control form-control-lg" id="name" name="name" placeholder="e.g. North Logistics Hub" required autofocus>
+                        </div>
+                        
+                        <!-- Location -->
+                        <div class="col-12">
+                            <label for="location" class="form-label fw-semibold">Location Address *</label>
+                            <input type="text" class="form-control form-control-lg" id="location" name="location" placeholder="e.g. Chicago, IL" required>
+                        </div>
+                        
+                        <!-- Manager Name -->
+                        <div class="col-12">
+                            <label for="manager_name" class="form-label fw-semibold">Manager Name *</label>
+                            <input type="text" class="form-control form-control-lg" id="manager_name" name="manager_name" placeholder="e.g. Jane Smith" required>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 pt-3 border-top d-flex justify-content-end gap-2">
+                        <a href="{{ url_for('warehouses') }}" class="btn btn-outline-secondary px-4">Cancel</a>
+                        <button type="submit" class="btn btn-primary px-4">Save Warehouse</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
